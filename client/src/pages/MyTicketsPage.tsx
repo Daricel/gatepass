@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { QRCodeSVG } from "qrcode.react";
-import { Alert, Button, ButtonLink, EmptyState, PageLoader, PageTitle, Perforation, TicketField, cx } from "../components/ui";
+import { Alert, Button, ButtonLink, EmptyState, Overprint, PageLoader, PageTitle, Perforation, TicketField, cx } from "../components/ui";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { formatDate, formatTime } from "../lib/format";
@@ -16,20 +16,26 @@ function TicketCard({ ticket, holder, isNew, onCancel }: { ticket: Ticket; holde
   const serial = String(ticket.id).padStart(6, "0");
 
   return (
-    <article className={cx("relative flex flex-col overflow-hidden border bg-card sm:flex-row", isNew ? "border-accent" : "border-ink")}>
-      {/* Side band with the printed "admit one" */}
-      <div className={cx("flex items-center justify-between px-5 py-2 sm:w-9 sm:flex-col sm:justify-center sm:px-0 sm:py-5", used ? "bg-ink-3" : "bg-accent")}>
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-card sm:rotate-180 sm:[writing-mode:vertical-rl]">
+    <article
+      className={cx(
+        "relative flex flex-col overflow-hidden border-2 border-ink bg-white sm:flex-row",
+        isNew && "shadow-[10px_10px_0_0_var(--color-pink)]",
+      )}
+    >
+      {/* Coloured band with the printed "admit one" */}
+      <div className={cx("grain relative flex items-center justify-between px-5 py-2 sm:w-10 sm:flex-col sm:justify-center sm:px-0 sm:py-5", used ? "bg-ink-2" : "bg-blue")}>
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-white sm:rotate-180 sm:[writing-mode:vertical-rl]">
           Admit one · Nº {serial}
         </span>
       </div>
 
-      <div className="flex-1 p-6">
-        {isNew && <p className="mono-label mb-2 !text-accent">Just issued</p>}
-        <Link to={`/events/${ticket.event.id}`} className="font-serif text-4xl leading-none tracking-tight hover:text-accent">
-          {ticket.event.title}
+      <div className="relative flex-1 overflow-hidden p-6">
+        <div aria-hidden className="halftone absolute -right-16 -top-16 size-48 rounded-full text-pink/35" />
+        {isNew && <p className="relative mb-3 inline-block bg-yellow px-1.5 font-mono text-[10px] font-semibold uppercase">Just printed</p>}
+        <Link to={`/events/${ticket.event.id}`} className="display relative block text-4xl leading-[0.9] [overflow-wrap:anywhere] hover:text-blue">
+          {used ? ticket.event.title : <Overprint>{ticket.event.title}</Overprint>}
         </Link>
-        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+        <dl className="relative mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
           <TicketField label="Date">{formatDate(ticket.event.startsAt)}</TicketField>
           <TicketField label="Doors">{formatTime(ticket.event.startsAt)}</TicketField>
           <TicketField label="Holder">{holder}</TicketField>
@@ -39,24 +45,23 @@ function TicketCard({ ticket, holder, isNew, onCancel }: { ticket: Ticket; holde
         </dl>
 
         {!used && (
-          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-4">
+          <div className="relative mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t-2 border-ink pt-4 font-mono text-[11px] font-semibold uppercase">
             <Button
               variant="ghost"
-              className="font-mono text-[11px]"
               onClick={async () => {
                 await navigator.clipboard.writeText(ticket.qrPayload);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1500);
               }}
             >
-              {copied ? "Copied ✓" : "Copy code"}
+              {copied ? "Copied!" : "Copy code"}
             </Button>
             {confirming ? (
-              <span className="flex items-center gap-4">
-                <span className="text-sm text-ink-2">Give up this seat?</span>
+              <span className="flex flex-wrap items-center gap-4">
+                <span className="normal-case">Give up this seat?</span>
                 <Button
                   variant="ghost"
-                  className="!text-accent"
+                  className="!text-ink !decoration-pink bg-pink px-1.5"
                   loading={busy}
                   onClick={async () => {
                     setBusy(true);
@@ -85,16 +90,16 @@ function TicketCard({ ticket, holder, isNew, onCancel }: { ticket: Ticket; holde
         <Perforation orientation="vertical" />
       </div>
 
-      {/* Stub */}
-      <div className="relative flex flex-col items-center justify-center gap-3 p-6 sm:w-60">
-        <div className={cx("border border-line bg-white p-2", used && "opacity-25")}>
-          <QRCodeSVG value={ticket.qrPayload} size={150} marginSize={1} fgColor="#1d1a16" aria-label="Ticket QR code" />
+      {/* Stub with the code, printed in the overprint violet */}
+      <div className="relative flex flex-col items-center justify-center gap-3 bg-white p-6 sm:w-60">
+        <div className={cx("border-2 border-ink bg-white p-2", used && "opacity-20")}>
+          <QRCodeSVG value={ticket.qrPayload} size={150} marginSize={1} fgColor="#002284" aria-label="Ticket QR code" />
         </div>
-        <span className="mono-label">{used ? "Used" : "Scan at the door"}</span>
+        <span className="mono-label font-semibold">{used ? "Used" : "Scan at the door"}</span>
         {used && (
-          <span className="absolute rotate-[-14deg] border-[3px] border-double border-go px-3 py-1 text-center font-mono text-sm font-medium uppercase tracking-[0.14em] text-go">
-            Admitted
-            {ticket.checkedInAt && <span className="block text-[11px]">{formatTime(ticket.checkedInAt)}</span>}
+          <span className="absolute -rotate-12 border-4 border-double border-pink bg-white/70 px-3 py-1 text-center mix-blend-multiply">
+            <span className="display block text-2xl text-pink">Admitted</span>
+            {ticket.checkedInAt && <span className="block font-mono text-[11px] font-semibold text-pink">{formatTime(ticket.checkedInAt)}</span>}
           </span>
         )}
       </div>
@@ -115,11 +120,9 @@ export function MyTicketsPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="border-b border-ink pb-8">
-        <PageTitle kicker={`${tickets.length} ticket${tickets.length === 1 ? "" : "s"}`} sub="Show the code at the entrance. Turning the screen brightness up helps the scanner.">
-          My <span className="italic">tickets</span>
-        </PageTitle>
-      </div>
+      <PageTitle kicker={`${tickets.length} ticket${tickets.length === 1 ? "" : "s"} in your pocket`} sub="Show the code at the entrance. Turn your screen brightness up so the scanner reads it first time.">
+        My tickets
+      </PageTitle>
 
       {justRegistered && (
         <div className="mt-6">
@@ -127,7 +130,7 @@ export function MyTicketsPage() {
         </div>
       )}
 
-      <div className="mt-8 space-y-6">
+      <div className="mt-10 space-y-8">
         {tickets.length === 0 ? (
           <EmptyState title="No tickets yet">
             <div className="mt-5">

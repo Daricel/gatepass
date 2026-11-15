@@ -25,7 +25,14 @@ Organizers publish events. Attendees register and get a QR ticket on their phone
 
 ## Design
 
-The UI has its own "box office" identity instead of a stock component-library look: warm paper and ink colours with a vermilion stamp accent, an editorial serif (Instrument Serif) for headlines, and IBM Plex Mono for ticket-style field labels. Tickets are drawn as real tickets with a perforated stub, a serial number, and an "Admitted" stamp once used. The check-in screen gives a full-panel verdict (green / ochre / vermilion) you can read from across a doorway. Fonts are self-hosted, so the app makes no third-party requests.
+The UI is styled like a **risograph-printed gig poster** rather than a stock component library. Everything is "printed" in two spot inks, fluorescent pink and blue, on white stock (plus a yellow highlighter). Where the inks overlap they multiply into a deep violet, exactly as they would on a real riso drum:
+
+- Headlines are printed twice, slightly out of register (`mix-blend-mode: multiply`).
+- Events are pinned up as flyers on a board, each in its own colourway, with halftone dots and print grain.
+- Tickets look like real tickets: perforated stub, serial number, and a pink "Admitted" stamp once used.
+- The door screen fills with a single ink (blue / yellow / pink) so the verdict reads from across a doorway.
+
+All colours and fonts (Archivo at 125% width, Martian Mono) are design tokens in one place, and the fonts are self-hosted so the app makes no third-party requests.
 
 ## Tech stack
 

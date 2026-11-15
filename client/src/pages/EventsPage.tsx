@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import { EventRow } from "../components/EventRow";
-import { Alert, EmptyState, PageLoader, cx } from "../components/ui";
+import { EventPoster } from "../components/EventPoster";
+import { Alert, EmptyState, Overprint, PageLoader, cx } from "../components/ui";
 import { api } from "../lib/api";
 import type { GpEvent } from "../lib/types";
 import { useAsync } from "../lib/useAsync";
@@ -25,39 +25,43 @@ export function EventsPage() {
     [q, past],
   );
 
-  const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-
   return (
     <div>
-      <section className="grid gap-10 border-b border-ink pb-10 lg:grid-cols-[1.4fr_1fr] lg:items-end">
-        <div>
-          <p className="mono-label mb-4">Programme · {today}</p>
-          <h1 className="font-serif text-6xl leading-[0.9] tracking-tight sm:text-8xl">
-            What's <span className="italic text-accent">on</span>
-            <br />
-            this season.
-          </h1>
+      <section className="relative mb-12">
+        {/* Two overlapping shapes, one per ink: the overlap prints violet */}
+        <div aria-hidden className="pointer-events-none absolute -right-4 -top-6 hidden h-64 w-64 sm:block lg:right-10">
+          <div className="grain absolute right-16 top-0 size-52 rounded-full bg-pink" />
+          <div className="grain absolute bottom-0 right-0 size-44 bg-blue mix-blend-multiply" />
         </div>
-        <div>
-          <p className="mb-5 max-w-sm text-ink-2">
-            Pick an event, take a free ticket, and show the code at the door. No printing, no queue at the desk.
-          </p>
-          <label htmlFor="search" className="mono-label mb-1.5 block">
-            Search the programme
+
+        <p className="mono-label relative mb-4 font-semibold">
+          <span className="bg-yellow px-1">Free entry</span> · Show your code at the door
+        </p>
+        <h1 className="display relative text-[clamp(3.5rem,11vw,8.5rem)]">
+          <Overprint>What's</Overprint>
+          <br />
+          <Overprint base="text-pink" over="text-blue">
+            on.
+          </Overprint>
+        </h1>
+
+        <div className="relative mt-10 max-w-xl">
+          <label htmlFor="search" className="mono-label mb-2 block font-semibold">
+            Search the board
           </label>
           <input
             id="search"
             type="search"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Title, venue or topic"
-            className="w-full border-b-2 border-ink bg-transparent py-2 font-serif text-2xl outline-none placeholder:text-ink-3 focus:border-accent"
+            placeholder="Workshop, Cluj, hackathon…"
+            className="w-full border-2 border-ink bg-white px-4 py-3 text-lg font-medium outline-none placeholder:text-ink-2/50 focus:shadow-[6px_6px_0_0_var(--color-pink)]"
           />
         </div>
       </section>
 
-      <div className="flex items-center justify-between border-b border-line py-3">
-        <div className="flex gap-6" role="tablist">
+      <div className="mb-8 flex items-center justify-between border-y-2 border-ink py-2.5">
+        <div className="flex gap-2" role="tablist">
           {(
             [
               ["Upcoming", false],
@@ -70,32 +74,26 @@ export function EventsPage() {
               aria-selected={past === value}
               onClick={() => setParams((p) => (value ? p.set("past", "true") : p.delete("past"), p))}
               className={cx(
-                "border-b-2 py-1 font-mono text-xs uppercase tracking-[0.12em]",
-                past === value ? "border-accent text-ink" : "border-transparent text-ink-2 hover:text-ink",
+                "px-2 py-1 font-mono text-[11px] font-semibold uppercase",
+                past === value ? "bg-ink text-stock" : "text-ink-2 hover:text-ink",
               )}
             >
               {label}
             </button>
           ))}
         </div>
-        {data && <span className="mono-label">{data.events.length} listed</span>}
+        {data && <span className="mono-label">{data.events.length} flyers</span>}
       </div>
 
-      {error && (
-        <div className="mt-6">
-          <Alert>{error.message}</Alert>
-        </div>
-      )}
+      {error && <Alert>{error.message}</Alert>}
       {loading && !data ? (
         <PageLoader />
       ) : data?.events.length === 0 ? (
-        <div className="mt-8">
-          <EmptyState title={q ? `Nothing matches “${q}”` : "The programme is empty"}>Try another search, or check back later.</EmptyState>
-        </div>
+        <EmptyState title={q ? `Nothing for “${q}”` : "The board is empty"}>Try another search, or check back later.</EmptyState>
       ) : (
-        <ul className={cx("divide-y divide-line", loading && "opacity-50")}>
-          {data?.events.map((e) => <EventRow key={e.id} event={e} />)}
-        </ul>
+        <div className={cx("grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3", loading && "opacity-50")}>
+          {data?.events.map((e, i) => <EventPoster key={e.id} event={e} index={i} />)}
+        </div>
       )}
     </div>
   );

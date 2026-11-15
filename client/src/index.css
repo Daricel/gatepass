@@ -1,70 +1,88 @@
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/instrument-serif/400-italic.css";
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-sans/600.css";
-@import "@fontsource/ibm-plex-mono/400.css";
-@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/martian-mono/index.css";
 @import "tailwindcss";
 
 /*
-  Gatepass "box office" palette: printed tickets and event posters.
-  Paper + ink, with vermilion used sparingly like a rubber stamp.
+  Gatepass: risograph gig-poster look.
+  Two spot inks (fluorescent pink + blue) printed on white stock.
+  Where they overlap they multiply into a deep violet, just like real riso.
 */
 @theme {
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Martian Mono Variable", ui-monospace, Menlo, monospace;
 
-  --color-paper: #f2ece1;   /* page background, warm newsprint */
-  --color-card: #faf7f1;    /* raised surfaces */
-  --color-ink: #1d1a16;     /* text, borders, primary dark */
-  --color-ink-2: #5b544a;   /* secondary text */
-  --color-ink-3: #8a8275;   /* faint text, placeholders */
-  --color-line: #d8cebe;    /* hairlines */
-  --color-accent: #c43e22;  /* vermilion stamp */
-  --color-accent-dark: #9e2f17;
-  --color-go: #2e6a4a;      /* admitted */
-  --color-warn: #c4861a;    /* ochre, already used / few left */
-
-  --radius-tag: 2px;
+  --color-stock: #f7f6f2;   /* paper */
+  --color-ink: #14163a;     /* body text, deep navy */
+  --color-ink-2: #555878;   /* secondary text */
+  --color-line: #d6d5e2;    /* hairlines */
+  --color-pink: #ff48b0;    /* riso Fluorescent Pink */
+  --color-blue: #0078bf;    /* riso Blue */
+  --color-yellow: #ffe800;  /* riso Yellow */
+  --color-violet: #002284;  /* pink × blue overprint */
 }
 
 @layer base {
-  html {
-    background-color: var(--color-paper);
+  html,
+  body {
+    background-color: var(--color-stock);
   }
   body {
     @apply font-sans text-ink antialiased;
-    background-color: var(--color-paper);
-    /* very light paper grain */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.11 0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    font-stretch: 100%;
   }
   ::selection {
-    background: var(--color-accent);
-    color: var(--color-card);
+    background: var(--color-yellow);
+    color: var(--color-ink);
   }
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 3px solid var(--color-pink);
     outline-offset: 2px;
   }
 }
 
-/* Small uppercase monospace caption, like the field labels printed on a ticket. */
-@utility mono-label {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  line-height: 1rem;
-  letter-spacing: 0.12em;
+/* Wide, heavy poster type. */
+@utility display {
+  font-family: var(--font-sans);
+  font-stretch: 125%;
+  font-weight: 850;
   text-transform: uppercase;
-  color: var(--color-ink-2);
+  line-height: 0.88;
+  letter-spacing: -0.015em;
 }
 
-/* qr-scanner overlay, recoloured to match */
+/* Small monospaced caption, like the small print on a flyer. */
+@utility mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  line-height: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Riso grain: tiny specks where the ink didn't take. Needs a positioned element. */
+@utility grain {
+  isolation: isolate;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.6;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.97 0 0 0 0 0.96 0 0 0 0 0.95 0 0 0 -2.4 1.45'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/* Halftone dots in the current text colour. */
+@utility halftone {
+  background-image: radial-gradient(currentColor 28%, transparent 30%);
+  background-size: 6px 6px;
+}
+
+/* qr-scanner overlay, recoloured */
 .scan-region-highlight-svg {
-  stroke: var(--color-card) !important;
-  stroke-width: 3 !important;
+  stroke: var(--color-yellow) !important;
+  stroke-width: 4 !important;
 }
 .code-outline-highlight {
-  stroke: var(--color-accent) !important;
+  stroke: var(--color-pink) !important;
 }

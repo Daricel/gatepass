@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
-import { Alert, Button, Field, cx } from "../components/ui";
+import { Alert, Button, Field, Overprint, cx } from "../components/ui";
 import { fieldErrors } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import type { Role, User } from "../lib/types";
@@ -14,15 +14,15 @@ function useAfterAuth() {
   return (user: User) => navigate(safeNext ?? (user.role === "organizer" ? "/dashboard" : "/"), { replace: true });
 }
 
-function AuthShell({ kicker, title, children, footer }: { kicker: string; title: ReactNode; children: ReactNode; footer: ReactNode }) {
+function AuthShell({ title, children, footer }: { title: ReactNode; children: ReactNode; footer: ReactNode }) {
   return (
-    <div className="mx-auto grid max-w-4xl gap-10 md:grid-cols-[1fr_1.1fr] md:gap-16">
-      <div className="md:pt-6">
-        <p className="mono-label mb-3">{kicker}</p>
-        <h1 className="font-serif text-6xl leading-[0.9] tracking-tight">{title}</h1>
-        <p className="mt-6 text-sm text-ink-2">{footer}</p>
+    <div className="mx-auto grid max-w-5xl items-start gap-10 md:grid-cols-[1fr_1fr] md:gap-16">
+      <div className="relative md:pt-4">
+        <div aria-hidden className="grain absolute -left-6 top-6 -z-10 size-48 rounded-full bg-yellow" />
+        <h1 className="display text-[clamp(3.5rem,8vw,6.5rem)]">{title}</h1>
+        <p className="mt-8 text-sm text-ink-2">{footer}</p>
       </div>
-      <div className="border border-ink bg-card p-6 sm:p-8">{children}</div>
+      <div className="border-2 border-ink bg-white p-6 shadow-[10px_10px_0_0_var(--color-blue)] sm:p-8">{children}</div>
     </div>
   );
 }
@@ -50,19 +50,20 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      kicker="Log in"
       title={
         <>
-          Welcome
+          <Overprint>Back</Overprint>
           <br />
-          <span className="italic">back.</span>
+          <Overprint base="text-pink" over="text-blue">
+            again?
+          </Overprint>
         </>
       }
       footer={
         <>
           No account yet?{" "}
-          <Link to="/register" className="text-ink underline underline-offset-4 hover:text-accent">
-            Create one
+          <Link to="/register" className="font-semibold text-ink underline decoration-pink decoration-2 underline-offset-4">
+            Make one
           </Link>
         </>
       }
@@ -75,9 +76,9 @@ export function LoginPage() {
           Log in
         </Button>
       </form>
-      <div className="mt-8 border-t border-dashed border-ink-3 pt-5">
-        <p className="mono-label mb-2">Demo accounts · password123</p>
-        <p className="font-mono text-xs leading-relaxed text-ink">
+      <div className="mt-8 border-t-2 border-dashed border-ink pt-5">
+        <p className="mono-label mb-2 font-semibold">Demo accounts · password123</p>
+        <p className="font-mono text-xs leading-relaxed">
           organizer@demo.dev
           <br />
           attendee@demo.dev
@@ -120,25 +121,26 @@ export function RegisterPage() {
     }
   }
 
-  const roles: [Role, string, string][] = [
-    ["attendee", "I'm going", "Take tickets, show them at the door"],
-    ["organizer", "I'm hosting", "Publish events, check people in"],
+  const roles: [Role, string, string, string][] = [
+    ["attendee", "I'm going", "Take tickets, show them at the door", "bg-pink"],
+    ["organizer", "I'm hosting", "Put up events, check people in", "bg-blue text-white"],
   ];
 
   return (
     <AuthShell
-      kicker="Sign up"
       title={
         <>
-          Get on
+          <Overprint>Get on</Overprint>
           <br />
-          the <span className="italic text-accent">list.</span>
+          <Overprint base="text-pink" over="text-blue">
+            the list.
+          </Overprint>
         </>
       }
       footer={
         <>
-          Already registered?{" "}
-          <Link to="/login" className="text-ink underline underline-offset-4 hover:text-accent">
+          Already on it?{" "}
+          <Link to="/login" className="font-semibold text-ink underline decoration-pink decoration-2 underline-offset-4">
             Log in
           </Link>
         </>
@@ -147,20 +149,19 @@ export function RegisterPage() {
       <form onSubmit={submit} className="space-y-5">
         {error && <Alert>{error}</Alert>}
         <fieldset>
-          <legend className="mono-label mb-1.5">Account type</legend>
-          <div className="grid grid-cols-2">
-            {roles.map(([value, label, desc], i) => (
+          <legend className="mono-label mb-1.5 font-semibold">Account type</legend>
+          <div className="grid grid-cols-2 gap-3">
+            {roles.map(([value, label, desc, active]) => (
               <label
                 key={value}
                 className={cx(
-                  "cursor-pointer border p-3 transition-colors",
-                  i === 1 && "-ml-px",
-                  role === value ? "relative z-10 border-ink bg-ink text-card" : "border-line hover:border-ink-3",
+                  "cursor-pointer border-2 border-ink p-3 transition-transform",
+                  role === value ? cx(active, "-rotate-1") : "bg-white hover:bg-yellow",
                 )}
               >
                 <input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} className="sr-only" />
-                <span className="block font-serif text-2xl leading-tight">{label}</span>
-                <span className={cx("mt-1 block text-xs", role === value ? "text-card/75" : "text-ink-2")}>{desc}</span>
+                <span className="display block text-lg">{label}</span>
+                <span className="mt-1 block text-xs font-medium">{desc}</span>
               </label>
             ))}
           </div>

@@ -31,7 +31,7 @@ export function App() {
             <Route
               path="*"
               element={
-                <EmptyState title="Wrong door.">
+                <EmptyState title="Wrong door">
                   <p>There's no page at this address.</p>
                   <div className="mt-5">
                     <ButtonLink to="/">Back to the programme</ButtonLink>
