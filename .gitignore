@@ -5,3 +5,6 @@ dist
 .env
 .DS_Store
 coverage
+
+# Personal notes (not published)
+NOTITE_ARHITECTURA.md
