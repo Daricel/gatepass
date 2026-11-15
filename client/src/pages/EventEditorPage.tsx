@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { Alert, Button, Card, Field, PageLoader, TextArea } from "../components/ui";
+import { Alert, Button, Card, Field, PageLoader, PageTitle, TextArea } from "../components/ui";
 import { api, fieldErrors } from "../lib/api";
 import { toLocalInput } from "../lib/format";
 import type { GpEvent } from "../lib/types";
@@ -63,12 +63,24 @@ export function EventEditorPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link to="/dashboard" className="text-sm font-medium text-indigo-600 hover:underline">
-        ← Dashboard
+      <Link to="/dashboard" className="font-mono text-xs uppercase tracking-[0.12em] text-ink-2 hover:text-accent">
+        ← Box office
       </Link>
-      <Card className="mt-4">
-        <h1 className="mb-6 text-xl font-bold">{isNew ? "Create an event" : "Edit event"}</h1>
-        <form onSubmit={submit} className="space-y-4">
+      <div className="mb-8 mt-6">
+        <PageTitle kicker={isNew ? "New listing" : `Editing Nº ${String(id).padStart(4, "0")}`}>
+          {isNew ? (
+            <>
+              Put it on <span className="italic">the bill</span>
+            </>
+          ) : (
+            <>
+              Edit <span className="italic">event</span>
+            </>
+          )}
+        </PageTitle>
+      </div>
+      <Card className="!border-ink">
+        <form onSubmit={submit} className="space-y-5">
           {error && <Alert>{error}</Alert>}
           <Field label="Title" name="title" defaultValue={event?.title} required minLength={3} maxLength={120} error={errors.title} />
           <TextArea label="Description" name="description" defaultValue={event?.description} maxLength={2000} error={errors.description} />
@@ -94,14 +106,14 @@ export function EventEditorPage() {
               error={errors.capacity}
             />
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
             <Button type="submit" loading={busy}>
               {isNew ? "Create event" : "Save changes"}
             </Button>
             {!isNew &&
               (confirmDelete ? (
-                <span className="flex items-center gap-2 text-sm">
-                  Delete event and all tickets?
+                <span className="flex flex-wrap items-center gap-3 text-sm">
+                  Delete the event and every ticket?
                   <Button type="button" variant="danger" onClick={remove} loading={busy}>
                     Delete
                   </Button>

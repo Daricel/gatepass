@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import { EventCard } from "../components/EventCard";
+import { EventRow } from "../components/EventRow";
 import { Alert, EmptyState, PageLoader, cx } from "../components/ui";
 import { api } from "../lib/api";
 import type { GpEvent } from "../lib/types";
@@ -25,50 +25,77 @@ export function EventsPage() {
     [q, past],
   );
 
+  const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
   return (
     <div>
-      <div className="mb-8 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-600 px-6 py-10 text-white sm:px-10">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Find your next event</h1>
-        <p className="mt-2 max-w-xl text-indigo-100">
-          Register in one click, get a QR ticket on your phone, and walk straight in.
-        </p>
-        <input
-          type="search"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Search by title, place or topic…"
-          aria-label="Search events"
-          className="mt-6 w-full max-w-lg rounded-xl border-0 px-4 py-3 text-slate-900 shadow-lg outline-none placeholder:text-slate-400 focus:ring-4 focus:ring-indigo-300"
-        />
+      <section className="grid gap-10 border-b border-ink pb-10 lg:grid-cols-[1.4fr_1fr] lg:items-end">
+        <div>
+          <p className="mono-label mb-4">Programme · {today}</p>
+          <h1 className="font-serif text-6xl leading-[0.9] tracking-tight sm:text-8xl">
+            What's <span className="italic text-accent">on</span>
+            <br />
+            this season.
+          </h1>
+        </div>
+        <div>
+          <p className="mb-5 max-w-sm text-ink-2">
+            Pick an event, take a free ticket, and show the code at the door. No printing, no queue at the desk.
+          </p>
+          <label htmlFor="search" className="mono-label mb-1.5 block">
+            Search the programme
+          </label>
+          <input
+            id="search"
+            type="search"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Title, venue or topic"
+            className="w-full border-b-2 border-ink bg-transparent py-2 font-serif text-2xl outline-none placeholder:text-ink-3 focus:border-accent"
+          />
+        </div>
+      </section>
+
+      <div className="flex items-center justify-between border-b border-line py-3">
+        <div className="flex gap-6" role="tablist">
+          {(
+            [
+              ["Upcoming", false],
+              ["Past", true],
+            ] as const
+          ).map(([label, value]) => (
+            <button
+              key={label}
+              role="tab"
+              aria-selected={past === value}
+              onClick={() => setParams((p) => (value ? p.set("past", "true") : p.delete("past"), p))}
+              className={cx(
+                "border-b-2 py-1 font-mono text-xs uppercase tracking-[0.12em]",
+                past === value ? "border-accent text-ink" : "border-transparent text-ink-2 hover:text-ink",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {data && <span className="mono-label">{data.events.length} listed</span>}
       </div>
 
-      <div className="mb-4 flex gap-2">
-        {[
-          ["Upcoming", false],
-          ["Past", true],
-        ].map(([label, value]) => (
-          <button
-            key={String(label)}
-            onClick={() => setParams((p) => (value ? p.set("past", "true") : p.delete("past"), p))}
-            className={cx(
-              "rounded-full px-4 py-1.5 text-sm font-medium",
-              past === value ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50",
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {error && <Alert>{error.message}</Alert>}
+      {error && (
+        <div className="mt-6">
+          <Alert>{error.message}</Alert>
+        </div>
+      )}
       {loading && !data ? (
         <PageLoader />
       ) : data?.events.length === 0 ? (
-        <EmptyState title={q ? `No events match "${q}"` : "No events yet"}>Try another search, or check back later.</EmptyState>
-      ) : (
-        <div className={cx("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", loading && "opacity-60")}>
-          {data?.events.map((e) => <EventCard key={e.id} event={e} />)}
+        <div className="mt-8">
+          <EmptyState title={q ? `Nothing matches “${q}”` : "The programme is empty"}>Try another search, or check back later.</EmptyState>
         </div>
+      ) : (
+        <ul className={cx("divide-y divide-line", loading && "opacity-50")}>
+          {data?.events.map((e) => <EventRow key={e.id} event={e} />)}
+        </ul>
       )}
     </div>
   );

@@ -1,80 +1,102 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { QRCodeSVG } from "qrcode.react";
-import { Alert, Badge, Button, ButtonLink, EmptyState, PageLoader } from "../components/ui";
+import { Alert, Button, ButtonLink, EmptyState, PageLoader, PageTitle, Perforation, TicketField, cx } from "../components/ui";
 import { api } from "../lib/api";
-import { formatDateTime, formatTime } from "../lib/format";
+import { useAuth } from "../lib/auth";
+import { formatDate, formatTime } from "../lib/format";
 import type { Ticket } from "../lib/types";
 import { useAsync } from "../lib/useAsync";
 
-function TicketCard({ ticket, highlight, onCancel }: { ticket: Ticket; highlight: boolean; onCancel: () => Promise<void> }) {
+function TicketCard({ ticket, holder, isNew, onCancel }: { ticket: Ticket; holder: string; isNew: boolean; onCancel: () => Promise<void> }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const used = ticket.status === "checked_in";
+  const serial = String(ticket.id).padStart(6, "0");
 
   return (
-    <article
-      className={`overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ${highlight ? "ring-2 ring-indigo-500" : "ring-slate-200"}`}
-    >
-      <div className="flex flex-col sm:flex-row">
-        <div className="flex-1 p-6">
-          <div className="flex items-center gap-2">
-            {used ? <Badge tone="green">Checked in {ticket.checkedInAt && formatTime(ticket.checkedInAt)}</Badge> : <Badge tone="indigo">Valid</Badge>}
-            {highlight && <Badge tone="amber">New</Badge>}
-          </div>
-          <Link to={`/events/${ticket.event.id}`} className="mt-3 block text-lg font-semibold hover:text-indigo-700">
-            {ticket.event.title}
-          </Link>
-          <p className="mt-1 text-sm text-slate-500">{formatDateTime(ticket.event.startsAt)}</p>
-          <p className="text-sm text-slate-500">{ticket.event.location}</p>
-          <p className="mt-4 text-xs text-slate-400">Ticket #{ticket.id}</p>
+    <article className={cx("relative flex flex-col overflow-hidden border bg-card sm:flex-row", isNew ? "border-accent" : "border-ink")}>
+      {/* Side band with the printed "admit one" */}
+      <div className={cx("flex items-center justify-between px-5 py-2 sm:w-9 sm:flex-col sm:justify-center sm:px-0 sm:py-5", used ? "bg-ink-3" : "bg-accent")}>
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-card sm:rotate-180 sm:[writing-mode:vertical-rl]">
+          Admit one · Nº {serial}
+        </span>
+      </div>
 
-          {!used && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button
-                variant="ghost"
-                className="px-2 text-xs"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(ticket.qrPayload);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                }}
-              >
-                {copied ? "Copied!" : "Copy code"}
-              </Button>
-              {confirming ? (
-                <>
-                  <Button
-                    variant="danger"
-                    className="px-2 text-xs"
-                    loading={busy}
-                    onClick={async () => {
-                      setBusy(true);
-                      await onCancel().finally(() => setBusy(false));
-                    }}
-                  >
-                    Yes, cancel ticket
-                  </Button>
-                  <Button variant="ghost" className="px-2 text-xs" onClick={() => setConfirming(false)}>
-                    Keep it
-                  </Button>
-                </>
-              ) : (
-                <Button variant="ghost" className="px-2 text-xs text-red-600" onClick={() => setConfirming(true)}>
-                  Cancel ticket
+      <div className="flex-1 p-6">
+        {isNew && <p className="mono-label mb-2 !text-accent">Just issued</p>}
+        <Link to={`/events/${ticket.event.id}`} className="font-serif text-4xl leading-none tracking-tight hover:text-accent">
+          {ticket.event.title}
+        </Link>
+        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+          <TicketField label="Date">{formatDate(ticket.event.startsAt)}</TicketField>
+          <TicketField label="Doors">{formatTime(ticket.event.startsAt)}</TicketField>
+          <TicketField label="Holder">{holder}</TicketField>
+          <TicketField label="Venue" className="col-span-2 sm:col-span-3">
+            {ticket.event.location}
+          </TicketField>
+        </dl>
+
+        {!used && (
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-4">
+            <Button
+              variant="ghost"
+              className="font-mono text-[11px]"
+              onClick={async () => {
+                await navigator.clipboard.writeText(ticket.qrPayload);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+            >
+              {copied ? "Copied ✓" : "Copy code"}
+            </Button>
+            {confirming ? (
+              <span className="flex items-center gap-4">
+                <span className="text-sm text-ink-2">Give up this seat?</span>
+                <Button
+                  variant="ghost"
+                  className="!text-accent"
+                  loading={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    await onCancel().finally(() => setBusy(false));
+                  }}
+                >
+                  Yes, cancel
                 </Button>
-              )}
-            </div>
-          )}
-        </div>
-        {/* Perforated "stub" with the QR code */}
-        <div className="relative flex items-center justify-center border-t-2 border-dashed border-slate-200 bg-slate-50 p-6 sm:border-l-2 sm:border-t-0">
-          <div className={used ? "opacity-30 grayscale" : ""}>
-            <QRCodeSVG value={ticket.qrPayload} size={156} marginSize={2} className="rounded-lg bg-white" aria-label="Ticket QR code" />
+                <Button variant="ghost" onClick={() => setConfirming(false)}>
+                  Keep it
+                </Button>
+              </span>
+            ) : (
+              <Button variant="ghost" onClick={() => setConfirming(true)}>
+                Cancel ticket
+              </Button>
+            )}
           </div>
-          {used && <span className="absolute rotate-[-12deg] rounded border-2 border-emerald-600 px-2 py-1 text-sm font-bold uppercase text-emerald-700">Used</span>}
+        )}
+      </div>
+
+      <div className="sm:hidden">
+        <Perforation orientation="horizontal" />
+      </div>
+      <div className="hidden sm:flex">
+        <Perforation orientation="vertical" />
+      </div>
+
+      {/* Stub */}
+      <div className="relative flex flex-col items-center justify-center gap-3 p-6 sm:w-60">
+        <div className={cx("border border-line bg-white p-2", used && "opacity-25")}>
+          <QRCodeSVG value={ticket.qrPayload} size={150} marginSize={1} fgColor="#1d1a16" aria-label="Ticket QR code" />
         </div>
+        <span className="mono-label">{used ? "Used" : "Scan at the door"}</span>
+        {used && (
+          <span className="absolute rotate-[-14deg] border-[3px] border-double border-go px-3 py-1 text-center font-mono text-sm font-medium uppercase tracking-[0.14em] text-go">
+            Admitted
+            {ticket.checkedInAt && <span className="block text-[11px]">{formatTime(ticket.checkedInAt)}</span>}
+          </span>
+        )}
       </div>
     </article>
   );
@@ -82,38 +104,43 @@ function TicketCard({ ticket, highlight, onCancel }: { ticket: Ticket; highlight
 
 export function MyTicketsPage() {
   const location = useLocation();
+  const { user } = useAuth();
   const justRegistered = (location.state as { justRegistered?: number } | null)?.justRegistered;
   const { data, error, loading, reload } = useAsync(() => api.get<{ tickets: Ticket[] }>("/api/tickets/mine"), []);
 
   if (loading && !data) return <PageLoader />;
   if (error) return <Alert>{error.message}</Alert>;
 
-  const now = new Date().toISOString();
-  const upcoming = data!.tickets.filter((t) => t.event.startsAt >= now || t.status === "valid");
-  const past = data!.tickets.filter((t) => !upcoming.includes(t));
+  const tickets = [...data!.tickets].sort((a, b) => Number(a.status === "checked_in") - Number(b.status === "checked_in"));
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-bold tracking-tight">My tickets</h1>
-      <p className="mt-1 text-sm text-slate-500">Show the QR code at the entrance. Turn your screen brightness up.</p>
+    <div className="mx-auto max-w-4xl">
+      <div className="border-b border-ink pb-8">
+        <PageTitle kicker={`${tickets.length} ticket${tickets.length === 1 ? "" : "s"}`} sub="Show the code at the entrance. Turning the screen brightness up helps the scanner.">
+          My <span className="italic">tickets</span>
+        </PageTitle>
+      </div>
+
       {justRegistered && (
-        <div className="mt-4">
-          <Alert tone="success">You're in! Your ticket is below.</Alert>
+        <div className="mt-6">
+          <Alert tone="success">You're on the list. Your ticket is below.</Alert>
         </div>
       )}
-      <div className="mt-6 space-y-4">
-        {data!.tickets.length === 0 ? (
+
+      <div className="mt-8 space-y-6">
+        {tickets.length === 0 ? (
           <EmptyState title="No tickets yet">
-            <div className="mt-4">
-              <ButtonLink to="/">Browse events</ButtonLink>
+            <div className="mt-5">
+              <ButtonLink to="/">See what's on</ButtonLink>
             </div>
           </EmptyState>
         ) : (
-          [...upcoming, ...past].map((t) => (
+          tickets.map((t) => (
             <TicketCard
               key={t.id}
               ticket={t}
-              highlight={t.event.id === justRegistered}
+              holder={user?.name ?? ""}
+              isNew={t.event.id === justRegistered}
               onCancel={async () => {
                 await api.del(`/api/tickets/${t.id}`);
                 reload();

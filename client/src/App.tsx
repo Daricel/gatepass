@@ -31,9 +31,10 @@ export function App() {
             <Route
               path="*"
               element={
-                <EmptyState title="Page not found">
-                  <div className="mt-4">
-                    <ButtonLink to="/">Go to events</ButtonLink>
+                <EmptyState title="Wrong door.">
+                  <p>There's no page at this address.</p>
+                  <div className="mt-5">
+                    <ButtonLink to="/">Back to the programme</ButtonLink>
                   </div>
                 </EmptyState>
               }

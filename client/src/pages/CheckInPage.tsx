@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router";
 import { QrScannerView } from "../components/QrScannerView";
-import { Alert, Badge, Button, Card, PageLoader, Progress, cx } from "../components/ui";
+import { Alert, Button, PageLoader, Progress, cx } from "../components/ui";
 import { api, ApiError } from "../lib/api";
-import { formatDateTime, formatTime } from "../lib/format";
+import { formatDate, formatTime } from "../lib/format";
 import type { Attendee, CheckInResult, GpEvent } from "../lib/types";
 import { useAsync } from "../lib/useAsync";
 
@@ -112,83 +112,86 @@ export function CheckInPage() {
   const registered = stats?.registered ?? event.registered;
   const checkedIn = stats?.checkedIn ?? event.checkedIn;
 
+  const pct = registered ? Math.round((checkedIn / registered) * 100) : 0;
+  const verdict = outcome && {
+    ok: { bg: "bg-go", title: "Admitted.", line: outcome.kind === "ok" ? `Welcome, ${outcome.name}.` : "" },
+    already: {
+      bg: "bg-warn",
+      title: "Already in.",
+      line: outcome.kind === "already" ? `${outcome.name}${outcome.at ? ` came through at ${formatTime(outcome.at)}` : ""}.` : "",
+    },
+    error: { bg: "bg-accent", title: "Rejected.", line: outcome.kind === "error" ? outcome.message : "" },
+  }[outcome.kind];
+
   return (
     <div>
-      <Link to="/dashboard" className="text-sm font-medium text-indigo-600 hover:underline">
-        ← Dashboard
+      <Link to="/dashboard" className="font-mono text-xs uppercase tracking-[0.12em] text-ink-2 hover:text-accent">
+        ← Box office
       </Link>
-      <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-4 border-b border-ink pb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{event.title}</h1>
-          <p className="text-sm text-slate-500">
-            {formatDateTime(event.startsAt)} · {event.location}
+          <p className="mono-label mb-2">
+            Door · {formatDate(event.startsAt)} · {event.location}
           </p>
+          <h1 className="font-serif text-5xl leading-[0.95] tracking-tight">{event.title}</h1>
         </div>
-        <span className="flex items-center gap-2 text-xs text-slate-500">
-          <span className={cx("size-2 rounded-full", connected ? "animate-pulse bg-emerald-500" : "bg-slate-300")} />
-          {connected ? "Live" : "Connecting…"}
+        <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em]">
+          <span className={cx("size-2 rounded-full", connected ? "animate-pulse bg-accent" : "bg-ink-3")} />
+          {connected ? "Live" : "Connecting"}
         </span>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-5">
-        <div className="space-y-4 lg:col-span-3">
-          <div className="relative">
+      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_24rem]">
+        <div className="space-y-6">
+          <div className="relative border border-ink bg-ink">
             <QrScannerView onScan={onScan} paused={!!outcome} />
-            {outcome && (
+            {verdict && (
               <div
                 role="status"
                 aria-live="assertive"
-                className={cx(
-                  "absolute inset-0 flex flex-col items-center justify-center rounded-2xl p-6 text-center text-white",
-                  outcome.kind === "ok" && "bg-emerald-600/95",
-                  outcome.kind === "already" && "bg-amber-500/95",
-                  outcome.kind === "error" && "bg-red-600/95",
-                )}
+                className={cx("absolute inset-0 flex flex-col justify-between p-6 text-card sm:p-10", verdict.bg)}
               >
-                <span className="text-6xl" aria-hidden>
-                  {outcome.kind === "ok" ? "✓" : outcome.kind === "already" ? "!" : "✕"}
+                <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-card/80">
+                  {outcome!.kind === "ok" ? "Ticket valid" : outcome!.kind === "already" ? "Ticket already used" : "Ticket not valid"}
                 </span>
-                <p className="mt-3 text-2xl font-bold">
-                  {outcome.kind === "ok" ? `Welcome, ${outcome.name}!` : outcome.kind === "already" ? "Already checked in" : "Not valid"}
-                </p>
-                <p className="mt-1 text-white/90">
-                  {outcome.kind === "already"
-                    ? `${outcome.name}${outcome.at ? ` at ${formatTime(outcome.at)}` : ""}`
-                    : outcome.kind === "error"
-                      ? outcome.message
-                      : "Ticket accepted"}
-                </p>
-                <Button variant="secondary" className="mt-6" onClick={() => setOutcome(undefined)}>
+                <div>
+                  <p className="font-serif text-7xl leading-none sm:text-8xl">{verdict.title}</p>
+                  <p className="mt-3 text-lg text-card/90">{verdict.line}</p>
+                </div>
+                <button
+                  onClick={() => setOutcome(undefined)}
+                  className="self-start border border-card px-5 py-2.5 font-mono text-xs uppercase tracking-[0.12em] hover:bg-card hover:text-ink"
+                >
                   Scan next
-                </Button>
+                </button>
               </div>
             )}
           </div>
 
-          <Card className="p-5">
-            <div className="flex items-baseline justify-between">
-              <p className="text-sm text-slate-500">Checked in</p>
-              <p className="text-sm text-slate-500">{registered ? Math.round((checkedIn / registered) * 100) : 0}%</p>
-            </div>
-            <p className="mb-3 text-4xl font-bold tracking-tight">
-              {checkedIn}
-              <span className="text-xl font-medium text-slate-400"> / {registered}</span>
-            </p>
-            <Progress value={checkedIn} max={registered} tone="emerald" />
-            {stats?.lastCheckIn && (
-              <p className="mt-3 text-xs text-slate-500">
-                Last: {stats.lastCheckIn.name} at {formatTime(stats.lastCheckIn.at)}
+          <div className="grid grid-cols-[auto_1fr] items-end gap-x-8 border-y border-line py-5">
+            <div>
+              <p className="mono-label">Through the door</p>
+              <p className="font-serif text-7xl leading-none">
+                {checkedIn}
+                <span className="text-3xl text-ink-3"> / {registered}</span>
               </p>
-            )}
-          </Card>
+            </div>
+            <div className="pb-2">
+              <p className="mb-2 text-right font-mono text-xs">{pct}%</p>
+              <Progress value={checkedIn} max={registered} tone="go" />
+              <p className="mt-2 h-4 truncate text-right font-mono text-[11px] text-ink-2">
+                {stats?.lastCheckIn && `Last in: ${stats.lastCheckIn.name}, ${formatTime(stats.lastCheckIn.at)}`}
+              </p>
+            </div>
+          </div>
 
           <div>
-            <button onClick={() => setShowPaste((s) => !s)} className="text-sm text-slate-500 underline-offset-2 hover:underline">
-              {showPaste ? "Hide" : "No camera? Paste a ticket code"}
+            <button onClick={() => setShowPaste((s) => !s)} className="font-mono text-xs uppercase tracking-[0.12em] text-ink-2 hover:text-ink">
+              {showPaste ? "− Hide code entry" : "+ No camera? Type or paste a code"}
             </button>
             {showPaste && (
               <form
-                className="mt-2 flex gap-2"
+                className="mt-3 flex gap-2"
                 onSubmit={(e: FormEvent<HTMLFormElement>) => {
                   e.preventDefault();
                   const input = e.currentTarget.elements.namedItem("payload") as HTMLInputElement;
@@ -200,7 +203,7 @@ export function CheckInPage() {
                   name="payload"
                   placeholder="GP1.…"
                   aria-label="Ticket code"
-                  className="flex-1 rounded-lg px-3 py-2 font-mono text-sm ring-1 ring-slate-300 outline-none focus:ring-2 focus:ring-indigo-600"
+                  className="flex-1 border border-line bg-card px-3 font-mono text-sm outline-none focus:border-ink"
                 />
                 <Button type="submit" loading={busy}>
                   Check in
@@ -210,11 +213,11 @@ export function CheckInPage() {
           </div>
         </div>
 
-        <Card className="flex max-h-[44rem] flex-col p-0 lg:col-span-2">
-          <div className="border-b border-slate-100 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-semibold">Attendees</h2>
-              <a href={`/api/events/${id}/attendees.csv`} className="text-sm font-medium text-indigo-600 hover:underline">
+        <section className="flex max-h-[46rem] flex-col border border-ink bg-card">
+          <div className="border-b border-ink p-4">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 className="font-serif text-3xl italic">Guest list</h2>
+              <a href={`/api/events/${id}/attendees.csv`} className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent hover:underline">
                 Export CSV
               </a>
             </div>
@@ -222,37 +225,36 @@ export function CheckInPage() {
               type="search"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder="Search name or email"
-              aria-label="Search attendees"
-              className="w-full rounded-lg px-3 py-2 text-sm ring-1 ring-slate-300 outline-none focus:ring-2 focus:ring-indigo-600"
+              placeholder="Find a name or email"
+              aria-label="Search guest list"
+              className="w-full border border-line bg-paper/60 px-3 py-2 text-sm outline-none placeholder:text-ink-3 focus:border-ink"
             />
           </div>
-          <ul className="flex-1 divide-y divide-slate-100 overflow-y-auto">
+          <ul className="flex-1 divide-y divide-line overflow-y-auto">
             {filtered.map((a) => (
               <li key={a.ticketId} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{a.name}</p>
-                  <p className="truncate text-xs text-slate-500">{a.email}</p>
+                  <p className={cx("truncate text-[15px]", a.status === "checked_in" && "text-ink-2")}>{a.name}</p>
+                  <p className="truncate font-mono text-[11px] text-ink-3">{a.email}</p>
                 </div>
                 {a.status === "checked_in" ? (
-                  <Badge tone="green">{a.checkedInAt ? formatTime(a.checkedInAt) : "In"}</Badge>
+                  <span className="shrink-0 font-mono text-xs text-go">✓ {a.checkedInAt ? formatTime(a.checkedInAt) : "In"}</span>
                 ) : (
-                  <Button
-                    variant="secondary"
-                    className="px-3 py-1 text-xs"
+                  <button
                     disabled={busy}
                     onClick={() => submit(() => api.post<CheckInResult>(`/api/events/${id}/attendees/${a.ticketId}/checkin`))}
+                    className="shrink-0 border border-ink px-2.5 py-1 font-mono text-[10.5px] uppercase tracking-[0.12em] hover:bg-ink hover:text-card disabled:opacity-40"
                   >
-                    Check in
-                  </Button>
+                    Let in
+                  </button>
                 )}
               </li>
             ))}
             {attendeesReq.data && filtered.length === 0 && (
-              <li className="px-4 py-8 text-center text-sm text-slate-500">{filter ? "No matches" : "No one registered yet"}</li>
+              <li className="px-4 py-10 text-center font-serif text-xl italic text-ink-2">{filter ? "No one by that name" : "No one on the list yet"}</li>
             )}
           </ul>
-        </Card>
+        </section>
       </div>
     </div>
   );

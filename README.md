@@ -6,10 +6,10 @@ Organizers publish events. Attendees register and get a QR ticket on their phone
 
 [![CI](https://github.com/Daricel/gatepass/actions/workflows/ci.yml/badge.svg)](https://github.com/Daricel/gatepass/actions/workflows/ci.yml)
 
-<!-- Add screenshots after running locally: docs/events.png, docs/ticket.png, docs/checkin.png -->
+
 | Browse events | QR ticket | Check-in screen |
 |---|---|---|
-| ![Events](docs/events.png) | ![Ticket](docs/ticket.png) | ![Check-in](docs/checkin.png) |
+| ![Events](docs/events.jpg) | ![Ticket](docs/ticket.jpg) | ![Check-in](docs/checkin.jpg) |
 
 ## Features
 
@@ -23,11 +23,15 @@ Organizers publish events. Attendees register and get a QR ticket on their phone
 - **Organizer stats**: registrations, fill rate, show-up rate for past events
 - Responsive UI, works on a phone at the door
 
+## Design
+
+The UI has its own "box office" identity instead of a stock component-library look: warm paper and ink colours with a vermilion stamp accent, an editorial serif (Instrument Serif) for headlines, and IBM Plex Mono for ticket-style field labels. Tickets are drawn as real tickets with a perforated stub, a serial number, and an "Admitted" stamp once used. The check-in screen gives a full-panel verdict (green / ochre / vermilion) you can read from across a doorway. Fonts are self-hosted, so the app makes no third-party requests.
+
 ## Tech stack
 
 | Layer | Tools |
 |---|---|
-| Frontend | React 19, TypeScript, React Router, Tailwind CSS, Vite |
+| Frontend | React 19, TypeScript, React Router, Tailwind CSS v4 (custom design tokens), Vite |
 | Backend | Node.js, Express 5, TypeScript, Zod validation |
 | Database | SQLite (built-in `node:sqlite`), raw SQL with indexes and constraints |
 | Auth & security | JWT in httpOnly + SameSite cookies, bcrypt, Helmet (CSP), rate limiting |

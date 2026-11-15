@@ -40,7 +40,7 @@ export function QrScannerView({ onScan, paused }: { onScan: (text: string) => vo
   }, [paused]);
 
   return (
-    <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-slate-900 sm:aspect-[4/3]">
+    <div className="relative aspect-square w-full overflow-hidden bg-ink sm:aspect-[4/3]">
       <video ref={videoRef} className="size-full object-cover" muted playsInline />
       {error && (
         <div className="absolute inset-0 flex items-center p-6">

@@ -1,7 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
-import { Logo } from "../components/Layout";
-import { Alert, Button, Card, Field, cx } from "../components/ui";
+import { Alert, Button, Field, cx } from "../components/ui";
 import { fieldErrors } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import type { Role, User } from "../lib/types";
@@ -15,17 +14,15 @@ function useAfterAuth() {
   return (user: User) => navigate(safeNext ?? (user.role === "organizer" ? "/dashboard" : "/"), { replace: true });
 }
 
-function AuthShell({ title, children, footer }: { title: string; children: React.ReactNode; footer: React.ReactNode }) {
+function AuthShell({ kicker, title, children, footer }: { kicker: string; title: ReactNode; children: ReactNode; footer: ReactNode }) {
   return (
-    <div className="mx-auto max-w-md py-8">
-      <div className="mb-6 flex justify-center">
-        <Logo />
+    <div className="mx-auto grid max-w-4xl gap-10 md:grid-cols-[1fr_1.1fr] md:gap-16">
+      <div className="md:pt-6">
+        <p className="mono-label mb-3">{kicker}</p>
+        <h1 className="font-serif text-6xl leading-[0.9] tracking-tight">{title}</h1>
+        <p className="mt-6 text-sm text-ink-2">{footer}</p>
       </div>
-      <Card>
-        <h1 className="mb-6 text-xl font-bold">{title}</h1>
-        {children}
-      </Card>
-      <p className="mt-6 text-center text-sm text-slate-500">{footer}</p>
+      <div className="border border-ink bg-card p-6 sm:p-8">{children}</div>
     </div>
   );
 }
@@ -53,17 +50,24 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      title="Welcome back"
+      kicker="Log in"
+      title={
+        <>
+          Welcome
+          <br />
+          <span className="italic">back.</span>
+        </>
+      }
       footer={
         <>
-          New here?{" "}
-          <Link to="/register" className="font-semibold text-indigo-600 hover:underline">
-            Create an account
+          No account yet?{" "}
+          <Link to="/register" className="text-ink underline underline-offset-4 hover:text-accent">
+            Create one
           </Link>
         </>
       }
     >
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="space-y-5">
         {error && <Alert>{error}</Alert>}
         <Field label="Email" name="email" type="email" autoComplete="email" required />
         <Field label="Password" name="password" type="password" autoComplete="current-password" required />
@@ -71,9 +75,13 @@ export function LoginPage() {
           Log in
         </Button>
       </form>
-      <div className="mt-6 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-        <p className="font-semibold text-slate-600">Demo accounts (password: password123)</p>
-        <p>organizer@demo.dev · attendee@demo.dev</p>
+      <div className="mt-8 border-t border-dashed border-ink-3 pt-5">
+        <p className="mono-label mb-2">Demo accounts · password123</p>
+        <p className="font-mono text-xs leading-relaxed text-ink">
+          organizer@demo.dev
+          <br />
+          attendee@demo.dev
+        </p>
       </div>
     </AuthShell>
   );
@@ -113,39 +121,49 @@ export function RegisterPage() {
   }
 
   const roles: [Role, string, string][] = [
-    ["attendee", "I'm attending", "Register for events, get QR tickets"],
-    ["organizer", "I'm organizing", "Create events, check people in"],
+    ["attendee", "I'm going", "Take tickets, show them at the door"],
+    ["organizer", "I'm hosting", "Publish events, check people in"],
   ];
 
   return (
     <AuthShell
-      title="Create your account"
+      kicker="Sign up"
+      title={
+        <>
+          Get on
+          <br />
+          the <span className="italic text-accent">list.</span>
+        </>
+      }
       footer={
         <>
-          Already have an account?{" "}
-          <Link to="/login" className="font-semibold text-indigo-600 hover:underline">
+          Already registered?{" "}
+          <Link to="/login" className="text-ink underline underline-offset-4 hover:text-accent">
             Log in
           </Link>
         </>
       }
     >
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="space-y-5">
         {error && <Alert>{error}</Alert>}
-        <fieldset className="grid grid-cols-2 gap-3">
-          <legend className="sr-only">Account type</legend>
-          {roles.map(([value, label, desc]) => (
-            <label
-              key={value}
-              className={cx(
-                "cursor-pointer rounded-xl p-3 ring-1 transition",
-                role === value ? "bg-indigo-50 ring-2 ring-indigo-600" : "ring-slate-200 hover:bg-slate-50",
-              )}
-            >
-              <input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} className="sr-only" />
-              <span className="block text-sm font-semibold">{label}</span>
-              <span className="mt-0.5 block text-xs text-slate-500">{desc}</span>
-            </label>
-          ))}
+        <fieldset>
+          <legend className="mono-label mb-1.5">Account type</legend>
+          <div className="grid grid-cols-2">
+            {roles.map(([value, label, desc], i) => (
+              <label
+                key={value}
+                className={cx(
+                  "cursor-pointer border p-3 transition-colors",
+                  i === 1 && "-ml-px",
+                  role === value ? "relative z-10 border-ink bg-ink text-card" : "border-line hover:border-ink-3",
+                )}
+              >
+                <input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} className="sr-only" />
+                <span className="block font-serif text-2xl leading-tight">{label}</span>
+                <span className={cx("mt-1 block text-xs", role === value ? "text-card/75" : "text-ink-2")}>{desc}</span>
+              </label>
+            ))}
+          </div>
         </fieldset>
         <Field label="Full name" name="name" autoComplete="name" required error={errors.name} />
         <Field label="Email" name="email" type="email" autoComplete="email" required error={errors.email} />
