@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # Generate real secrets with: openssl rand -base64 32
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      TICKET_SECRET: ${TICKET_SECRET:?set TICKET_SECRET in .env}
+    volumes:
+      - gatepass-data:/data
+volumes:
+  gatepass-data:
