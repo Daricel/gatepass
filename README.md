@@ -4,7 +4,7 @@
 
 Organizers publish events. Attendees register and get a QR ticket on their phone. At the entrance, the organizer scans tickets with any laptop or phone camera while a live attendance counter updates on every screen.
 
-![CI](../../actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/Daricel/gatepass/actions/workflows/ci.yml/badge.svg)](https://github.com/Daricel/gatepass/actions/workflows/ci.yml)
 
 <!-- Add screenshots after running locally: docs/events.png, docs/ticket.png, docs/checkin.png -->
 | Browse events | QR ticket | Check-in screen |
